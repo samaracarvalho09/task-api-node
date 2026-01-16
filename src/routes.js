@@ -24,62 +24,115 @@ export const routes = [
         );
       }
 
-      return res.end(JSON.stringify(tasks));
+      return res.writeHead(200, { "Content-Type": "application/json" }).end(
+        JSON.stringify({
+          success: true,
+          data: {
+            total: tasks.length,
+            tasks,
+          },
+        })
+      );
+    },
+  },
+  {
+    method: "GET",
+    path: buildRoutePath("/context-tasks"),
+    handler: (req, res) => {
+      const context = {
+        prioridade: [
+          { id: 1, nome: "Baixa" },
+          { id: 2, nome: "Média" },
+          { id: 3, nome: "Alta" },
+        ],
+        categoria: [
+          { id: 1, nome: "Trabalho" },
+          { id: 2, nome: "Estudos" },
+          { id: 3, nome: "Pessoal" },
+        ],
+      };
+
+      return res.writeHead(200, { "Content-Type": "application/json" }).end(
+        JSON.stringify({
+          success: true,
+          data: context,
+        })
+      );
     },
   },
   {
     method: "POST",
     path: buildRoutePath("/tasks"),
     handler: (req, res) => {
-      const { title, description } = req.body;
+      const { title, description, due_date, categoria_id, prioridade_id } =
+        req.body;
 
       if (!title || !description) {
-        return res
-          .writeHead(400)
-          .end(
-            JSON.stringify({ error: "title e description são obrigatórios" })
-          );
+        return res.writeHead(400, { "Content-Type": "application/json" }).end(
+          JSON.stringify({
+            success: false,
+            error: "title e description são obrigatórios",
+          })
+        );
       }
-
-      console.log('POST BODY:', req.body);
-
 
       const task = {
         id: randomUUID(),
         title,
         description,
-        completed_at: null,
-        created_at: new Date(),
-        updated_at: null,
+        categoriaId: categoria_id ?? null,
+        prioridadeId: prioridade_id ?? null,
+        dueDate: due_date ? new Date(due_date) : null,
+        completedAt: null,
+        createdAt: new Date(),
+        updatedAt: null,
       };
 
       database.insert("tasks", task);
-      console.log('POST BODY:', req.body);
-      return res.writeHead(204).end();
+
+      return res.writeHead(201, { "Content-Type": "application/json" }).end(
+        JSON.stringify({
+          success: true,
+          data: task,
+        })
+      );
     },
   },
+
   {
     method: "PUT",
     path: buildRoutePath("/tasks/:id"),
     handler: (req, res) => {
       const { id } = req.params;
-      const { title, description } = req.body;
+      const { title, description, due_date, categoria_id, prioridade_id } =
+        req.body;
 
       const task = database.select("tasks").find((t) => t.id === id);
 
       if (!task) {
-        return res
-          .writeHead(404)
-          .end(JSON.stringify({ error: "Tarefa não encontrada" }));
+        return res.writeHead(404, { "Content-Type": "application/json" }).end(
+          JSON.stringify({
+            success: false,
+            error: "Tarefa não encontrada",
+          })
+        );
       }
 
       database.update("tasks", id, {
         ...(title && { title }),
         ...(description && { description }),
+        ...(due_date && { due_date: new Date(due_date) }),
+        ...(categoria_id && { categoria_id }),
+        ...(prioridade_id && { prioridade_id }),
         updated_at: new Date(),
       });
 
-      return res.writeHead(204).end();
+      return res.writeHead(200, { "Content-Type": "application/json" }).end(
+        JSON.stringify({
+          success: true,
+          message: "Tarefa atualizada com sucesso",
+        })
+      );
     },
   },
   {
@@ -98,7 +151,12 @@ export const routes = [
 
       database.delete("tasks", id);
 
-      return res.writeHead(204).end();
+      return res.writeHead(200).end(
+        JSON.stringify({
+          success: true,
+          message: "Tarefa removida com sucesso",
+        })
+      );
     },
   },
   {
@@ -120,7 +178,12 @@ export const routes = [
         updated_at: new Date(),
       });
 
-      return res.writeHead(204).end();
+      return res.writeHead(200).end(
+        JSON.stringify({
+          success: true,
+          message: "Status da tarefa atualizado",
+        })
+      );
     },
   },
 ];
