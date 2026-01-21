@@ -20,7 +20,7 @@ export const routes = [
         tasks = tasks.filter(
           (task) =>
             task.title.toLowerCase().includes(searchLower) ||
-            task.description.toLowerCase().includes(searchLower)
+            task.description.toLowerCase().includes(searchLower),
         );
       }
 
@@ -31,7 +31,7 @@ export const routes = [
             total: tasks.length,
             tasks,
           },
-        })
+        }),
       );
     },
   },
@@ -56,7 +56,7 @@ export const routes = [
         JSON.stringify({
           success: true,
           data: context,
-        })
+        }),
       );
     },
   },
@@ -64,7 +64,7 @@ export const routes = [
     method: "POST",
     path: buildRoutePath("/tasks"),
     handler: (req, res) => {
-      const { title, description, due_date, categoria_id, prioridade_id } =
+      const { title, description, dueDate, categoriaId, prioridadeId } =
         req.body;
 
       if (!title || !description) {
@@ -72,7 +72,7 @@ export const routes = [
           JSON.stringify({
             success: false,
             error: "title e description são obrigatórios",
-          })
+          }),
         );
       }
 
@@ -80,9 +80,9 @@ export const routes = [
         id: randomUUID(),
         title,
         description,
-        categoriaId: categoria_id ?? null,
-        prioridadeId: prioridade_id ?? null,
-        dueDate: due_date ? new Date(due_date) : null,
+        categoriaId: categoriaId ?? null,
+        prioridadeId: prioridadeId ?? null,
+        dueDate: dueDate ? new Date(dueDate) : null,
         completedAt: null,
         createdAt: new Date(),
         updatedAt: null,
@@ -94,7 +94,7 @@ export const routes = [
         JSON.stringify({
           success: true,
           data: task,
-        })
+        }),
       );
     },
   },
@@ -104,7 +104,7 @@ export const routes = [
     path: buildRoutePath("/tasks/:id"),
     handler: (req, res) => {
       const { id } = req.params;
-      const { title, description, due_date, categoria_id, prioridade_id } =
+      const { title, description, dueDate, categoriaId, prioridadeId } =
         req.body;
 
       const task = database.select("tasks").find((t) => t.id === id);
@@ -114,24 +114,24 @@ export const routes = [
           JSON.stringify({
             success: false,
             error: "Tarefa não encontrada",
-          })
+          }),
         );
       }
 
       database.update("tasks", id, {
         ...(title && { title }),
         ...(description && { description }),
-        ...(due_date && { due_date: new Date(due_date) }),
-        ...(categoria_id && { categoria_id }),
-        ...(prioridade_id && { prioridade_id }),
-        updated_at: new Date(),
+        ...(dueDate && { dueDate: new Date(dueDate) }),
+        ...(categoriaId && { categoriaId }),
+        ...(prioridadeId && { prioridadeId }),
+        updatedAt: new Date(),
       });
 
       return res.writeHead(200, { "Content-Type": "application/json" }).end(
         JSON.stringify({
           success: true,
           message: "Tarefa atualizada com sucesso",
-        })
+        }),
       );
     },
   },
@@ -151,11 +151,11 @@ export const routes = [
 
       database.delete("tasks", id);
 
-      return res.writeHead(200).end(
+      return res.writeHead(200, { "Content-Type": "application/json" }).end(
         JSON.stringify({
           success: true,
           message: "Tarefa removida com sucesso",
-        })
+        }),
       );
     },
   },
@@ -174,15 +174,20 @@ export const routes = [
       }
 
       database.update("tasks", id, {
-        completed_at: task.completed_at ? null : new Date(),
-        updated_at: new Date(),
+        completedAt: task.completedAt ? null : new Date(),
+        updatedAt: new Date(),
       });
 
       return res.writeHead(200).end(
         JSON.stringify({
           success: true,
+          data: {
+            ...task,
+            completedAt: task.completedAt ? null : new Date(),
+            updatedAt: new Date(),
+          },
           message: "Status da tarefa atualizado",
-        })
+        }),
       );
     },
   },
